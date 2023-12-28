@@ -1,0 +1,26 @@
+{
+  "name": "allex_bsenvironmentwebcomponent",
+  "version": "1.0.0",
+  "description": "AllexJS web component for bootstrap related visualization of the Environment functionality",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/allex-web-components/bsenvironment.git"
+  },
+  "keywords": [
+    "ecosystem:AllexJS",
+    "bootstrap",
+    "environment",
+    "web",
+    "component"
+  ],
+  "author": "Andrija Petrovic <andrija.hers@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/allex-web-components/bsenvironment/issues"
+  },
+  "homepage": "https://github.com/allex-web-components/bsenvironment#readme"
+}

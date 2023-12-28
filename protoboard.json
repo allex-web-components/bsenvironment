@@ -1,0 +1,19 @@
+{
+  "browserify": {
+    "dist/browserified.js": "index.js"
+  },
+  "dependencies": {
+    "js": [
+      "allex:app:lib",
+      "allex:jqueryelements:lib",
+      "allex:timer:lib",
+      "allex:templateslite:lib",
+      "allex:htmltemplates:lib",
+      "allex:bufferedtrigger:lib",
+      "allex:bootstrap:webcomponent",
+      "allex:bootstrapmarkup:lib"
+    ],
+    "css": [
+    ]
+  }
+}
