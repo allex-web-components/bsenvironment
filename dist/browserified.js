@@ -410,11 +410,14 @@ function createExecLogElement (execlib, applib) {
 
   //statics on ExecLogElement
   function onParentMessage (evnt) {
+    var dispel;
     if (!(evnt && evnt.data && evnt.data.request=='showExecLog')) {
       return;
     }
     try {
-      this.getElement('Display').set('actual', true);
+      dispel = this.getElement('Display');
+      dispel.set('actual', false);
+      dispel.set('actual', true);
     } catch (e) {}
   }
   //endof statics on ExecLogElement
