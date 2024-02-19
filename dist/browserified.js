@@ -357,6 +357,9 @@ function createExecLogElement (execlib, applib) {
     });
   };
   ExecLogElement.prototype.actualEnvironmentDescriptor = function (myname) {
+    if (browserlib.isInIFrame()) {
+      window.addEventListener('message', onParentMessage.bind(this));
+    }
     return lib.extendWithConcat(ClickableElement.prototype.actualEnvironmentDescriptor.call(this, myname)||{}, {
       logic: [{
         triggers: 'environment.'+this.getConfigVal('environmentname')+':executionLog',
@@ -404,6 +407,17 @@ function createExecLogElement (execlib, applib) {
     }
     return res;
   }
+
+  //statics on ExecLogElement
+  function onParentMessage (evnt) {
+    if (!(evnt && evnt.data && evnt.data.request=='showExecLog')) {
+      return;
+    }
+    try {
+      this.getElement('Display').set('actual', true);
+    } catch (e) {}
+  }
+  //endof statics on ExecLogElement
   
   applib.registerElementType('ExecLog', ExecLogElement);
 }
