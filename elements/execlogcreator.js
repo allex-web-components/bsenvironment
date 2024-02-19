@@ -272,6 +272,9 @@ function createExecLogElement (execlib, applib) {
     this.$element.css({
       'background-color': stats.active ? 'orange' : (stats.failednotseen ? 'red' : 'green')
     });
+    if (browserlib.isInIFrame()) {
+      window.parent.postMessage({execLogStats:stats});
+    }
   };
 
   function stater (res, line) {
