@@ -6,6 +6,7 @@
     "js": [
       "allex:app:lib",
       "allex:jqueryelements:lib",
+      "allex:browser:webcomponent",
       "allex:timer:lib",
       "allex:templateslite:lib",
       "allex:htmltemplates:lib",
