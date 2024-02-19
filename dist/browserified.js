@@ -384,7 +384,7 @@ function createExecLogElement (execlib, applib) {
       'background-color': stats.active ? 'orange' : (stats.failednotseen ? 'red' : 'green')
     });
     if (browserlib.isInIFrame()) {
-      window.parent.postMessage({execLogStats:stats});
+      window.parent.postMessage({execLogStats:stats}, '*');
     }
   };
 
