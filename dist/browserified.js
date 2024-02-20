@@ -118,6 +118,108 @@ function createExecLogElement (execlib, applib) {
     m = lR.get('allex_htmltemplateslib');
 
   var browserlib = lR.get('allex_browserwebcomponent');
+
+  var ClickableElement = applib.getElementType('ClickableElement');
+  
+  function ExecLogElement (id, options) {
+    options = options || {};
+    ClickableElement.call(this, id, options);
+  }
+  lib.inherit(ExecLogElement, ClickableElement);
+  ExecLogElement.prototype.__cleanUp = function () {
+    ClickableElement.prototype.__cleanUp.call(this);
+  };
+  ExecLogElement.prototype.staticEnvironmentDescriptor = function (myname) {
+    return lib.extendWithConcat(ClickableElement.prototype.staticEnvironmentDescriptor.call(this, myname)||{}, {
+      elements: [{
+        name: myname+'.Display',
+        type: 'ExecLogDisplay',
+        options: {
+          actual: false,
+          force_dom_parent: 'body',
+          self_selector: 'attrib:executionlog_element',
+          environmentname: this.getConfigVal('environmentname')
+        }
+      }]
+    });
+  };
+  ExecLogElement.prototype.actualEnvironmentDescriptor = function (myname) {
+    if (browserlib.isInIFrame()) {
+      window.addEventListener('message', onParentMessage.bind(this));
+    }
+    return lib.extendWithConcat(ClickableElement.prototype.actualEnvironmentDescriptor.call(this, myname)||{}, {
+      logic: [{
+        triggers: 'environment.'+this.getConfigVal('environmentname')+':executionLog',
+        references: 'element.'+myname+'.Display.Grid',
+        handler: this.onLog.bind(this)
+      },{
+        triggers: 'element.'+myname+'!clicked',
+        references: 'element.'+myname+'.Display',
+        handler: function (disp, clickignored) {
+          disp.set('actual', true);
+        }
+      }]
+    });
+  };
+  ExecLogElement.prototype.onLog = function (grid, log) {
+    grid.set('data', log);
+    var stats = (log||[]).reduce(stater, {calls: 0, active: 0, succeeded: 0, failed: 0, failednotseen: 0});
+    this.set('tooltip', [
+      'Calls: '+stats.calls,
+      'Active: '+stats.active,
+      'Succeeded: '+stats.succeeded,
+      'Failed: '+stats.failed
+    ].join('\n'));
+    this.$element.css({
+      'background-color': stats.active ? 'orange' : (stats.failednotseen ? 'red' : 'green')
+    });
+    if (browserlib.isInIFrame()) {
+      window.parent.postMessage({execLogStats:stats}, '*');
+    }
+  };
+
+  function stater (res, line) {
+    res.calls++;
+    if (!line.finished) {
+      res.active++;
+    } else {
+      if (line.error) {
+        res.failed++;
+        if (!line.seen) {
+          res.failednotseen++;
+        }
+      } else if (lib.defined(line.result)) {
+        res.succeeded++
+      }
+    }
+    return res;
+  }
+
+  //statics on ExecLogElement
+  function onParentMessage (evnt) {
+    if (!(evnt && evnt.data && evnt.data.request=='showExecLog')) {
+      return;
+    }
+    if (!(this.$element && this.$element.length>0)) {
+      return;
+    }
+    this.$element.trigger('click');
+  }
+  //endof statics on ExecLogElement
+  
+  applib.registerElementType('ExecLog', ExecLogElement);
+}
+module.exports = createExecLogElement;
+},{}],3:[function(require,module,exports){
+function createExecLogDisplayElement (execlib, applib) {
+  'use strict';
+
+  var lib = execlib.lib,
+    lR = execlib.execSuite.libRegistry,
+    o = lR.get('allex_templateslitelib').override,
+    m = lR.get('allex_htmltemplateslib');
+
+  var browserlib = lR.get('allex_browserwebcomponent');
   var OffCanvasElement = applib.getElementType('OffCanvasElement');
 
   function timeRenderer (params) {
@@ -331,61 +433,59 @@ function createExecLogElement (execlib, applib) {
   }
   
   applib.registerElementType('ExecLogDisplay', ExecLogDisplayElement);
+}
+module.exports = createExecLogDisplayElement;
+},{}],4:[function(require,module,exports){
+function createExecLogSharedWithParentWindowElement (execlib, applib) {
+  'use strict';
 
-  var ClickableElement = applib.getElementType('ClickableElement');
+  var lib = execlib.lib,
+    lR = execlib.execSuite.libRegistry,
+    o = lR.get('allex_templateslitelib').override,
+    m = lR.get('allex_htmltemplateslib');
+
+  var browserlib = lR.get('allex_browserwebcomponent');
+
+  var BasicElement = applib.BasicElement;
   
-  function ExecLogElement (id, options) {
+  function ExecLogSharedWithParentWindowElement (id, options) {
     options = options || {};
-    ClickableElement.call(this, id, options);
+    BasicElement.call(this, id, options);
   }
-  lib.inherit(ExecLogElement, ClickableElement);
-  ExecLogElement.prototype.__cleanUp = function () {
-    ClickableElement.prototype.__cleanUp.call(this);
+  lib.inherit(ExecLogSharedWithParentWindowElement, BasicElement);
+  ExecLogSharedWithParentWindowElement.prototype.__cleanUp = function () {
+    BasicElement.prototype.__cleanUp.call(this);
   };
-  ExecLogElement.prototype.staticEnvironmentDescriptor = function (myname) {
-    return lib.extendWithConcat(ClickableElement.prototype.staticEnvironmentDescriptor.call(this, myname)||{}, {
+  ExecLogSharedWithParentWindowElement.prototype.staticEnvironmentDescriptor = function (myname) {
+    return lib.extendWithConcat(BasicElement.prototype.staticEnvironmentDescriptor.call(this, myname)||{}, {
       elements: [{
         name: myname+'.Display',
         type: 'ExecLogDisplay',
         options: {
           actual: false,
           force_dom_parent: 'body',
+          nocontroller: true,
           self_selector: 'attrib:executionlog_element',
           environmentname: this.getConfigVal('environmentname')
         }
       }]
     });
   };
-  ExecLogElement.prototype.actualEnvironmentDescriptor = function (myname) {
+  ExecLogSharedWithParentWindowElement.prototype.actualEnvironmentDescriptor = function (myname) {
     if (browserlib.isInIFrame()) {
       window.addEventListener('message', onParentMessage.bind(this));
     }
-    return lib.extendWithConcat(ClickableElement.prototype.actualEnvironmentDescriptor.call(this, myname)||{}, {
+    return lib.extendWithConcat(BasicElement.prototype.actualEnvironmentDescriptor.call(this, myname)||{}, {
       logic: [{
         triggers: 'environment.'+this.getConfigVal('environmentname')+':executionLog',
         references: 'element.'+myname+'.Display.Grid',
         handler: this.onLog.bind(this)
-      },{
-        triggers: 'element.'+myname+'!clicked',
-        references: 'element.'+myname+'.Display',
-        handler: function (disp, clickignored) {
-          disp.set('actual', true);
-        }
       }]
     });
   };
-  ExecLogElement.prototype.onLog = function (grid, log) {
+  ExecLogSharedWithParentWindowElement.prototype.onLog = function (grid, log) {
     grid.set('data', log);
     var stats = (log||[]).reduce(stater, {calls: 0, active: 0, succeeded: 0, failed: 0, failednotseen: 0});
-    this.set('tooltip', [
-      'Calls: '+stats.calls,
-      'Active: '+stats.active,
-      'Succeeded: '+stats.succeeded,
-      'Failed: '+stats.failed
-    ].join('\n'));
-    this.$element.css({
-      'background-color': stats.active ? 'orange' : (stats.failednotseen ? 'red' : 'green')
-    });
     if (browserlib.isInIFrame()) {
       window.parent.postMessage({execLogStats:stats}, '*');
     }
@@ -408,30 +508,36 @@ function createExecLogElement (execlib, applib) {
     return res;
   }
 
-  //statics on ExecLogElement
+  //statics on ExecLogSharedWithParentWindowElement
   function onParentMessage (evnt) {
+    var disp;
     if (!(evnt && evnt.data && evnt.data.request=='showExecLog')) {
       return;
     }
-    if (!(this.$element && this.$element.length>0)) {
-      return;
+    try {
+      disp = this.getElement('Display');
+      disp.set('actual', false);
+      disp.set('actual', true);
+    } catch(e) {
+      var a = e;
     }
-    this.$element.trigger('click');
   }
-  //endof statics on ExecLogElement
+  //endof statics on ExecLogSharedWithParentWindowElement
   
-  applib.registerElementType('ExecLog', ExecLogElement);
+  applib.registerElementType('ExecLogSharedWithParentWindow', ExecLogSharedWithParentWindowElement);
 }
-module.exports = createExecLogElement;
-},{}],3:[function(require,module,exports){
+module.exports = createExecLogSharedWithParentWindowElement;
+},{}],5:[function(require,module,exports){
 function createElements (execlib, applib, mylib) {
   'use strict';
 
   require('./connectingwidgetcreator')(execlib, applib);
+  require('./execlogdisplaycreator')(execlib, applib);
   require('./execlogcreator')(execlib, applib);
+  require('./execlogsharedwithparentwindowcreator')(execlib, applib);
 }
 module.exports = createElements;
-},{"./connectingwidgetcreator":1,"./execlogcreator":2}],4:[function(require,module,exports){
+},{"./connectingwidgetcreator":1,"./execlogcreator":2,"./execlogdisplaycreator":3,"./execlogsharedwithparentwindowcreator":4}],6:[function(require,module,exports){
 (function (execlib) {
   var lib = execlib.lib,
     lR = execlib.execSuite.libRegistry,
@@ -446,9 +552,48 @@ module.exports = createElements;
   lR.register('allex_bsenvironmentwebcomponent', mylib);
 })(ALLEX)
 
-},{"./elements":3,"./markup":6}],5:[function(require,module,exports){
+},{"./elements":5,"./markup":8}],7:[function(require,module,exports){
 function createExecLogButtonMarkup (o, m, bsmarkuplib, mylib) {
   'use strict';
+
+  function execLogPaneMarkup (options) {
+    return o(m.div
+      , 'CLASS', 'd-flex flex-column w-100 h-100'
+      , 'CONTENTS', [
+        o(m.div
+          , 'CLASS', 'd-flex flex-row justify-content-end'
+          , 'CONTENTS', [
+            o(m.button
+              , 'CLASS', 'btn btn-primary icon-bell squareButton me-2'
+              , 'ATTRS', 'data-bs-toggle="tooltip" title="Clear All Except Errors" execlogdisplayelement="ClearAllExceptErrors"'
+            ),
+            o(m.button
+              , 'CLASS', 'btn btn-primary icon-cancel-circle squareButton'
+              , 'ATTRS', 'data-bs-toggle="tooltip" title="Clear All" execlogdisplayelement="ClearAll"'
+            )
+          ]
+        ),
+        o(m.div
+          , 'ATTRS', 'execlogdisplayelement="Grid"'
+          , 'CLASS', 'flex-grow-1 ag-theme-balham'
+        )
+      ]
+    );
+  }
+
+  mylib.execLogPane = function execLogButtonAndPane (options) {
+    return bsmarkuplib.offCanvasPane({
+      split: true,
+      class: '',
+      offcanvas: {
+        orientation: 'end',
+        title: 'Execution Log',
+        class: 'collapsepane',
+        attrs: 'style="width:80%; margin-top:0; max-heigth:100vh;" executionlog_element="Display"'
+      },
+      pane: execLogPaneMarkup(options)
+    });
+  };
 
   mylib.execLogButtonAndPane = function execLogButtonAndPane (options) {
     return bsmarkuplib.offCanvasButton({
@@ -463,33 +608,12 @@ function createExecLogButtonMarkup (o, m, bsmarkuplib, mylib) {
         class: 'collapsepane',
         attrs: 'style="width:80%; margin-top:0; max-heigth:100vh;" executionlog_element="Display"'
       },
-      pane: o(m.div
-        , 'CLASS', 'd-flex flex-column w-100 h-100'
-        , 'CONTENTS', [
-          o(m.div
-            , 'CLASS', 'd-flex flex-row justify-content-end'
-            , 'CONTENTS', [
-              o(m.button
-                , 'CLASS', 'btn btn-primary icon-bell squareButton me-2'
-                , 'ATTRS', 'data-bs-toggle="tooltip" title="Clear All Except Errors" execlogdisplayelement="ClearAllExceptErrors"'
-              ),
-              o(m.button
-                , 'CLASS', 'btn btn-primary icon-cancel-circle squareButton'
-                , 'ATTRS', 'data-bs-toggle="tooltip" title="Clear All" execlogdisplayelement="ClearAll"'
-              )
-            ]
-          ),
-          o(m.div
-            , 'ATTRS', 'execlogdisplayelement="Grid"'
-            , 'CLASS', 'flex-grow-1 ag-theme-balham'
-          )
-        ]
-      )
+      pane: execLogPaneMarkup(options)
     });
   };
 }
 module.exports = createExecLogButtonMarkup;
-},{}],6:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 function createMarkup (execlib) {
   'use strict';
   
@@ -508,4 +632,4 @@ function createMarkup (execlib) {
   return markuplib;
 }
 module.exports = createMarkup;
-},{"./execlogbuttoncreator":5}]},{},[4]);
+},{"./execlogbuttoncreator":7}]},{},[6]);
