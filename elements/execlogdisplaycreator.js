@@ -108,6 +108,7 @@ function createExecLogDisplayElement (execlib, applib) {
         options: {
           actual: true,
           self_selector: 'attrib:execlogdisplayelement',
+          themingpath: 'Theming',
           contextmenu: {
             class: 'dropdown-menu',
             item: {
