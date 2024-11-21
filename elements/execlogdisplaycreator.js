@@ -40,7 +40,7 @@ function createExecLogDisplayElement (execlib, applib) {
   ComplexContentsTooltip.prototype.init = function (params) {
     var val = params.value;
     this.gui = document.createElement('div');
-    this.gui.style['background-color'] = 'beige';
+    this.gui.style['background-color'] = 'var(--bs-warning-bg-subtle)';
     this.gui.style['overflow-y'] = 'auto';
     this.gui.innerHTML = '<pre>'+JSON.stringify(val, undefined, 2)+'</pre>';
   };
@@ -66,7 +66,7 @@ function createExecLogDisplayElement (execlib, applib) {
   ErrorTooltip.prototype.init = function (params) {
     var val = params.value;
     this.gui = document.createElement('div');
-    this.gui.style['background-color'] = 'beige';
+    this.gui.style['background-color'] = 'var(--bs-warning-bg-subtle)';
     this.gui.style['overflow-y'] = 'auto';
     this.gui.innerHTML = '<pre>'+val+'</pre>';
   };
